@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오르다 - 기업 분석</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; color: #333; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e9ecef; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .logo-section { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; padding: 1.5rem; text-align: center; }
+        .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .logo-subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .nav-menu { padding: 1.5rem 0; }
+        .nav-item { padding: 1rem 1.5rem; cursor: pointer; transition: all 0.3s ease; border-left: 4px solid transparent; display: flex; align-items: center; gap: 0.8rem; }
+        .nav-item:hover { background-color: #f8f9fa; border-left-color: #FF6B6B; }
+        .nav-item.active { background-color: #fff3f3; border-left-color: #FF6B6B; color: #FF6B6B; font-weight: 600; }
+        .nav-icon { font-size: 1.1rem; width: 20px; }
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .page-header { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .breadcrumb { color: #6c757d; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .page-title { font-size: 2rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.5rem; }
+        .page-subtitle { color: #6c757d; font-size: 1.1rem; line-height: 1.6; }
+        .search-filter-section { background: white; border-radius: 12px; padding: 1.5rem 2rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .search-controls { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 300px; position: relative; }
+        .search-input { width: 100%; padding: 0.8rem 1rem 0.8rem 2.5rem; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s ease; }
+        .search-input:focus { outline: none; border-color: #FF6B6B; }
+        .search-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #6c757d; }
+        .filter-select { padding: 0.8rem 1rem; border: 2px solid #e9ecef; border-radius: 8px; background: white; cursor: pointer; transition: border-color 0.3s ease; }
+        .filter-select:focus { outline: none; border-color: #FF6B6B; }
+        .companies-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .section-title { font-size: 1.4rem; font-weight: 600; color: #2c3e50; }
+        .sort-controls { display: flex; gap: 0.5rem; align-items: center; }
+        .sort-btn { padding: 0.5rem 1rem; border: 1px solid #e9ecef; background: white; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; font-size: 0.9rem; }
+        .sort-btn:hover { border-color: #FF6B6B; }
+        .sort-btn.active { background: #FF6B6B; color: white; border-color: #FF6B6B; }
+        .companies-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
+        .company-card { border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease; cursor: pointer; }
+        .company-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-color: #FF6B6B; }
+        .company-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .company-info { flex: 1; }
+        .company-name { font-size: 1.3rem; font-weight: bold; color: #2c3e50; margin-bottom: 0.3rem; }
+        .company-code { color: #6c757d; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .company-sector { background: #e3f2fd; color: #1976d2; padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.8rem; font-weight: 500; display: inline-block; }
+        .company-price { text-align: right; }
+        .current-price { font-size: 1.4rem; font-weight: bold; color: #2c3e50; }
+        .price-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.2rem; }
+        .price-up { color: #dc3545; }
+        .price-down { color: #007bff; }
+        .company-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 0.8rem; color: #6c757d; margin-top: 0.2rem; }
+        .company-actions { display: flex; gap: 0.5rem; }
+        .action-btn { padding: 0.6rem 1rem; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; flex: 1; }
+        .btn-primary { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; }
+        .btn-secondary { background: #f8f9fa; color: #495057; border: 1px solid #e9ecef; }
+        .action-btn:hover { transform: translateY(-1px); }
+        .pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 2rem; }
+        .page-btn { padding: 0.6rem 1rem; border: 1px solid #e9ecef; background: white; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; }
+        .page-btn:hover { border-color: #FF6B6B; }
+        .page-btn.active { background: #FF6B6B; color: white; border-color: #FF6B6B; }
+        @media (max-width: 768px) { .layout { flex-direction: column; } .sidebar { width: 100%; order: 2; } .main-content { order: 1; padding: 1rem; } .search-controls { flex-direction: column; align-items: stretch; } .companies-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="logo-section">
+                <div class="logo">오르다</div>
+                <div class="logo-subtitle">투자 학습 플랫폼</div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon"></span><span>Home</span></div>
+                <div class="nav-item" onclick="navigateTo('mypage')"><span class="nav-icon"></span><span>My Page</span></div>
+                <div class="nav-item" onclick="navigateTo('news')"><span class="nav-icon"></span><span>News</span></div>
+                <div class="nav-item" onclick="navigateTo('sector')"><span class="nav-icon"></span><span>Sector</span></div>
+                <div class="nav-item active" onclick="navigateTo('company')"><span class="nav-icon"></span><span>Company</span></div>
+                <div class="nav-item" onclick="navigateTo('game')"><span class="nav-icon"></span><span>Game</span></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="page-header" style="text-align: center;">
+                <h1 class="page-title"> 기업 분석</h1>
+                <p class="page-subtitle">상장 기업별 재무 정보와 관련 이슈를 분석해보세요</p>
+            </div>
+            
+            <div class="search-filter-section">
+                <div class="search-controls">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" placeholder="기업명, 종목코드 검색..." id="company-search">
+                    </div>
+                    <select class="filter-select" id="sector-filter">
+                        <option value="">전체 섹터</option>
+                        <option value="IT 서비스">IT 서비스</option>
+                        <option value="반도체">반도체</option>
+                        <option value="정유">정유</option>
+                        <option value="방위산업">방위산업</option>
+                        <option value="화학">화학</option>
+                        <option value="금융업">금융업</option>
+                    </select>
+                    <select class="filter-select" id="market-filter">
+                        <option value="">전체 시장</option>
+                        <option value="KOSPI">KOSPI</option>
+                        <option value="KOSDAQ">KOSDAQ</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="companies-section">
+                <div class="section-header">
+                    <h2 class="section-title" id="company-list-title">기업 목록</h2>
+                    <div class="sort-controls">
+                        <button class="sort-btn active" onclick="sortCompanies('name')">이름순</button>
+                        <button class="sort-btn" onclick="sortCompanies('price')">주가순</button>
+                        <button class="sort-btn" onclick="sortCompanies('change')">등락순</button>
+                    </div>
+                </div>
+                
+                <div class="companies-grid" id="companies-container"></div>
+                
+                <div class="pagination">
+                    <button class="page-btn">‹</button>
+                    <button class="page-btn active">1</button>
+                    <button class="page-btn">2</button>
+                    <button class="page-btn">3</button>
+                    <button class="page-btn">›</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- 1. DB 연동 대신 더미 데이터를 사용합니다. ---
+        const companiesData = [
+            { id: 1, name: "삼성전자", code: "005930", sector: "반도체", market: "KOSPI", price: 74800, change: "+1200", changeRate: "+1.63%", marketCap: "447조원", per: "15.2", pbr: "1.4", isUp: true },
+            { id: 2, name: "SK하이닉스", code: "000660", sector: "반도체", market: "KOSPI", price: 89600, change: "-800", changeRate: "-0.88%", marketCap: "65조원", per: "12.8", pbr: "1.1", isUp: false },
+            { id: 3, name: "S-OIL", code: "010950", sector: "정유", market: "KOSPI", price: 68900, change: "+2100", changeRate: "+3.14%", marketCap: "8.2조원", per: "8.5", pbr: "0.9", isUp: true },
+            { id: 4, name: "한국항공우주", code: "047810", sector: "방위산업", market: "KOSPI", price: 42350, change: "+1850", changeRate: "+4.57%", marketCap: "1.9조원", per: "18.2", pbr: "2.1", isUp: true },
+            { id: 5, name: "LG화학", code: "051910", sector: "화학", market: "KOSPI", price: 385000, change: "-5000", changeRate: "-1.28%", marketCap: "27조원", per: "22.1", pbr: "1.8", isUp: false },
+            { id: 6, name: "카카오", code: "035720", sector: "IT 서비스", market: "KOSPI", price: 58400, change: "+900", changeRate: "+1.56%", marketCap: "25조원", per: "N/A", pbr: "2.3", isUp: true },
+            { id: 7, name: "네이버", code: "035420", sector: "IT 서비스", market: "KOSPI", price: 178500, change: "-2500", changeRate: "-1.38%", marketCap: "29조원", per: "16.8", pbr: "1.9", isUp: false },
+            { id: 8, name: "KB금융", code: "105560", sector: "금융업", market: "KOSPI", price: 68200, change: "+1100", changeRate: "+1.64%", marketCap: "28조원", per: "6.2", pbr: "0.5", isUp: true }
+        ];
+
+        let currentSort = 'name';
+        let filteredCompanies = [...companiesData];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sectorParam = urlParams.get('sector');
+            
+            displayCompanies(companiesData);
+            setupEventListeners();
+            
+            if (sectorParam) {
+                const sectorFilter = document.getElementById('sector-filter');
+                if (sectorFilter) {
+                    sectorFilter.value = sectorParam;
+                    filterAndDisplay();
+                }
+            }
+        });
+
+        function setupEventListeners() {
+            document.getElementById('company-search').addEventListener('input', filterAndDisplay);
+            document.getElementById('sector-filter').addEventListener('change', filterAndDisplay);
+            document.getElementById('market-filter').addEventListener('change', filterAndDisplay);
+        }
+
+        function filterAndDisplay() {
+            const searchTerm = document.getElementById('company-search').value.toLowerCase();
+            const sectorFilter = document.getElementById('sector-filter').value;
+            const marketFilter = document.getElementById('market-filter').value;
+
+            filteredCompanies = companiesData.filter(company => {
+                const matchesSearch = company.name.toLowerCase().includes(searchTerm) || company.code.includes(searchTerm);
+                const matchesSector = !sectorFilter || company.sector === sectorFilter;
+                const matchesMarket = !marketFilter || company.market === marketFilter;
+                return matchesSearch && matchesSector && matchesMarket;
+            });
+
+            sortCompanies(currentSort, false); // 정렬 상태 유지하며 다시 표시
+        }
+
+        function sortCompanies(sortBy, updateActive = true) {
+            if (updateActive && event) {
+                document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+            }
+            currentSort = sortBy;
+            filteredCompanies.sort((a, b) => {
+                switch(sortBy) {
+                    case 'name': return a.name.localeCompare(b.name);
+                    case 'price': return b.price - a.price;
+                    case 'change': return parseFloat(b.changeRate) - parseFloat(a.changeRate);
+                    default: return 0;
+                }
+            });
+            displayCompanies(filteredCompanies);
+        }
+
+        function displayCompanies(companies) {
+            const container = document.getElementById('companies-container');
+            container.innerHTML = '';
+            companies.forEach(company => {
+                container.appendChild(createCompanyCard(company));
+            });
+            document.getElementById('company-list-title').textContent = `기업 목록 (${companies.length}개)`;
+        }
+
+        function createCompanyCard(company) {
+            const card = document.createElement('div');
+            card.className = 'company-card';
+            const changePrefix = company.isUp ? '▲' : '▼';
+            card.innerHTML = `
+                <div class="company-header">
+                    <div class="company-info">
+                        <div class="company-name">${company.name}</div>
+                        <div class="company-code">${company.code}</div>
+                        <div class="company-sector">${company.sector}</div>
+                    </div>
+                    <div class="company-price">
+                        <div class="current-price">${company.price.toLocaleString()}원</div>
+                        <div class="price-change ${company.isUp ? 'price-up' : 'price-down'}">
+                            ${changePrefix} ${company.change.replace(/[+-]/g, '')} (${company.changeRate})
+                        </div>
+                    </div>
+                </div>
+                <div class="company-stats">
+                    <div class="stat-item"><div class="stat-value">${company.marketCap}</div><div class="stat-label">시가총액</div></div>
+                    <div class="stat-item"><div class="stat-value">${company.per}</div><div class="stat-label">PER</div></div>
+                    <div class="stat-item"><div class="stat-value">${company.pbr}</div><div class="stat-label">PBR</div></div>
+                </div>
+                <div class="company-actions">
+                    <button class="action-btn btn-primary" onclick="analyzeCompany(${company.id})"> 분석하기</button>
+                    <button class="action-btn btn-secondary" onclick="viewFinancials(${company.id})"> 재무정보</button>
+                </div>
+            `;
+            return card;
+        }
+
+        function analyzeCompany(companyId) {
+            const company = companiesData.find(c => c.id === companyId);
+            alert(`'${company.name}' 기업의 상세 분석 페이지로 이동합니다. (구현 예정)`);
+        }
+
+        function viewFinancials(companyId) {
+            const company = companiesData.find(c => c.id === companyId);
+            alert(`${company.name}의 상세 재무정보를 조회합니다!`);
+        }
+
+        // --- 요청대로 navigateTo 함수를 재설정합니다. ---
+        function navigateTo(page) {
+            const pages = {
+                'home': '/static/index.html',
+                'mypage': '/static/mypage.html',
+                'news': '/static/news.html', 
+                'sector': '/static/sector.html',
+                'company': '/static/company.html',
+                'game': '/static/game.html'
+            };
+            if (pages[page] && window.location.pathname !== pages[page]) {
+                window.location.href = pages[page];
+            }
+        }
+    </script>
+</body>
+</html>

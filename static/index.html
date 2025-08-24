@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오르다 - 오늘의 이슈</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; color: #333; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e9ecef; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .logo-section { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; padding: 1.5rem; text-align: center; }
+        .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .logo-subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .nav-menu { padding: 1.5rem 0; }
+        .nav-item { padding: 1rem 1.5rem; cursor: pointer; transition: all 0.3s ease; border-left: 4px solid transparent; display: flex; align-items: center; gap: 0.8rem; }
+        .nav-item:hover { background-color: #f8f9fa; border-left-color: #FF6B6B; }
+        .nav-item.active { background-color: #fff3f3; border-left-color: #FF6B6B; color: #FF6B6B; font-weight: 600; }
+        .nav-icon { font-size: 1.1rem; width: 20px; }
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .page-header { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
+        .welcome-text { color: #6c757d; font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .page-title { font-size: 2.5rem; font-weight: 700; color: #2c3e50; margin-bottom: 1rem; }
+        .page-subtitle { color: #6c757d; font-size: 1.1rem; line-height: 1.6; }
+        .today-date { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; padding: 0.8rem 1.5rem; border-radius: 25px; display: inline-block; margin-top: 1rem; font-weight: 600; }
+        .issues-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .section-title { font-size: 1.5rem; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 0.5rem; }
+        .issues-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; }
+        .issue-card { border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: all 0.3s ease; position: relative; background: white; overflow: hidden; }
+        .issue-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-color: #FF6B6B; }
+        .issue-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #FF6B6B, #667eea, #a8e6cf); opacity: 0; transition: opacity 0.3s ease; }
+        .issue-card:hover::before { opacity: 1; }
+        .issue-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .issue-number { background: #f8f9fa; color: #6c757d; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .issue-rank { background: linear-gradient(135deg, #FF6B6B, #667eea); color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .issue-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.8rem; line-height: 1.4; color: #2c3e50; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .issue-content { color: #6c757d; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .issue-footer { display: flex; justify-content: flex-end; align-items: center; gap: 0.5rem; }
+        .analyze-btn { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
+        .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4); }
+        .bookmark-btn { background: #ffc107; color: #333; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .bookmark-btn:hover { background: #ffb300; transform: translateY(-1px); }
+        .loading { text-align: center; padding: 3rem; color: #6c757d; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #FF6B6B; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .status-bar { background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%); border-radius: 8px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .status-info { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;}
+        .status-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: #495057; }
+        .status-indicator { width: 8px; height: 8px; border-radius: 50%; background: #28a745; }
+        .modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 9999 !important; display: none; justify-content: center; align-items: center; overflow-y: auto; }
+        .modal-overlay.show { display: flex !important; }
+        .modal-content { background: white; border-radius: 12px; max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; margin: 2rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .modal-close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 24px; cursor: pointer; color: #666; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
+        .modal-close-btn:hover { background: #f5f5f5; color: #333; }
+        .modal-title { margin: 0 2rem 1.5rem 0; color: #2c3e50; font-size: 1.5rem; font-weight: 600; }
+        .modal-score-section { margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .modal-content-section { margin-bottom: 2rem; }
+        .modal-content-title { margin-bottom: 0.8rem; color: #333; font-size: 1.1rem; font-weight: 600; }
+        .modal-content-box { background: #f9f9f9; padding: 1rem; border-radius: 8px; line-height: 1.6; color: #555; max-height: 200px; overflow-y: auto; }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .modal-section-title.industries { color: #FF6B6B; }
+        .modal-section-title.past-issues { color: #667eea; }
+        .modal-section-title.summary { color: #28a745; }
+        .modal-highlight-box { padding: 1rem; border-radius: 8px; min-height: 200px; }
+        .modal-highlight-box.industries { background: #fff3f3; border-left: 4px solid #FF6B6B; }
+        .modal-highlight-box.past-issues { background: #f0f4ff; border-left: 4px solid #667eea; }
+        .modal-highlight-box.summary { background: #f8fff9; border-left: 4px solid #28a745; }
+        .modal-item { margin-bottom: 1rem; padding: 0.8rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .modal-item-title { font-weight: bold; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .modal-item-score { font-size: 0.9rem; color: #666; font-weight: normal; }
+        .modal-item-reason { color: #666; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .modal-item-meta { color: #999; font-size: 0.8rem; }
+        .modal-footer { border-top: 1px solid #eee; padding-top: 1rem; color: #666; font-size: 0.9rem; }
+        .score-breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .score-item { background: #f8f9fa; padding: 0.8rem; border-radius: 6px; border-left: 3px solid #2196F3; }
+        .score-label { font-weight: 600; color: #333; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .score-value-box { font-size: 1.1rem; font-weight: bold; color: #2196F3; margin-bottom: 0.5rem; }
+        .score-reason { font-size: 0.8rem; color: #666; line-height: 1.4; font-weight: normal; }
+        .verification-result { border-radius: 6px; margin: 0.5rem 0; transition: all 0.2s; }
+        .simulation-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.3rem; font-weight: 600; }
+        .simulation-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .issue-bookmark {
+            font-size: 1.8rem; /* 별 아이콘 크기 */
+            color: #ced4da; /* 기본 빈 별 색상 */
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .issue-bookmark:hover {
+            transform: scale(1.2); /* 마우스 올리면 살짝 커지게 */
+        }
+
+        .issue-bookmark.bookmarked {
+            color: #FFC107; /* 북마크된 별 색상 (노란색) */
+        }
+        @media (max-width: 1024px) { .issues-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); } .modal-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .layout { flex-direction: column; } .sidebar { width: 100%; order: 2; } .main-content { order: 1; padding: 1rem; } .issues-grid { grid-template-columns: 1fr; } .page-title { font-size: 2rem; } .modal-content { margin: 1rem; padding: 1.5rem; } .modal-grid { grid-template-columns: 1fr; gap: 1rem; } }
+    </style>
+</head>
+<body>
+    <!-- (기존 sidebar, main-content 등 HTML 구조는 동일) -->
+    <div class="layout">
+        <div class="sidebar">
+            <div class="logo-section">
+                <div class="logo">오르다</div>
+                <div class="logo-subtitle">투자 학습 플랫폼</div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item active" onclick="navigateTo('home')"> <span class="nav-icon"></span> <span>Home</span> </div>
+                <div class="nav-item" onclick="navigateTo('mypage')"> <span class="nav-icon"></span> <span>My Page</span> </div>
+                <div class="nav-item" onclick="navigateTo('news')"> <span class="nav-icon"></span> <span>News</span> </div>
+                <div class="nav-item" onclick="navigateTo('sector')"> <span class="nav-icon"></span> <span>Sector</span> </div>
+                <div class="nav-item" onclick="navigateTo('company')"> <span class="nav-icon"></span> <span>Company</span> </div>
+                <div class="nav-item" onclick="navigateTo('game')"> <span class="nav-icon"></span> <span>Game</span> </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="page-header">
+                <div class="welcome-text">투자 학습의 시작</div>
+                <h1 class="page-title">오늘의 이슈</h1>
+                <p class="page-subtitle"> AI가 선별한 주식시장 관련 핵심 이슈들을<br> 분석하여 투자 인사이트를 얻어보세요 </p>
+                <div class="today-date" id="today-date"></div>
+            </div>
+            
+            <div class="status-bar">
+                <div class="status-info">
+                    <div class="status-item"> <div class="status-indicator"></div> <span>AI 필터링 활성화</span> </div>
+                    <div class="status-item"> <span> 마지막 업데이트: <span id="last-update-time"></span></span> </div>
+                    <div class="status-item"> <span> AI 선별 <span id="issue-count">0</span>개 이슈</span> </div>
+                </div>
+                <button id="refresh-issues-btn" style="padding: 0.5rem 1rem; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s;">  새로고침 </button>
+            </div>
+            
+            <div class="issues-section">
+                <div class="section-header">
+                    <h2 class="section-title">  AI 선별 주요 이슈 (<span id="grid-issue-count">0</span>개) </h2>
+                </div>
+                <div class="issues-grid" id="issues-grid">
+                    <div class="loading" id="loading-state">
+                        <div class="spinner"></div> <p>AI가 선별한 이슈를 불러오는 중...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="ai-analysis-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeAIAnalysisModal()" class="modal-close-btn">&times;</button>
+            <h2 id="modal-issue-title" class="modal-title"></h2>
+            <div class="modal-score-section">
+                <div> <strong> 주식시장 관련성 점수: <span id="score-value"></span>/10</strong> <button onclick="toggleScoreBreakdown()" style="margin-left: 10px; padding: 4px 8px; background: #e3f2fd; border: 1px solid #2196F3; border-radius: 4px; cursor: pointer; font-size: 0.8rem;"> 세부점수</button> </div>
+                <div> <span style="color:#666;"> RAG 분석 신뢰도: <span id="rag-confidence"></span></span> </div>
+            </div>
+            <div id="score-breakdown-section" class="modal-content-section" style="display: none;">
+                <h3 class="modal-content-title"> AI 채점 근거 및 세부 점수</h3>
+                <div id="score-breakdown-content" class="modal-content-box" style="max-height: 300px;">
+                    <div class="score-breakdown-grid">
+                        <div class="score-item"> <div class="score-label"> 직접적 기업영향</div> <div class="score-value-box"> <span id="direct-company-score"></span>/10 <div id="direct-company-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label">🏛️ 정책적 영향</div> <div class="score-value-box"> <span id="policy-score"></span>/10 <div id="policy-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 시장 심리</div> <div class="score-value-box"> <span id="market-sentiment-score"></span>/10 <div id="market-sentiment-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 거시경제</div> <div class="score-value-box"> <span id="macro-economic-score"></span>/10 <div id="macro-economic-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 산업 트렌드</div> <div class="score-value-box"> <span id="industry-trend-score"></span>/10 <div id="industry-trend-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 종합 계산</div> <div class="score-value-box"> <span id="total-calculation"></span> <div id="calculation-method" class="score-reason"></div> </div> </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-content-section"> <h3 class="modal-content-title"> 원본 이슈 내용</h3> <div id="modal-issue-content" class="modal-content-box"></div> </div>
+            <div class="modal-grid">
+                <div class="modal-section"> <h3 class="modal-section-title industries"> 관련 산업 (RAG 분석)</h3> <div id="modal-related-industries" class="modal-highlight-box industries"></div> </div>
+                <div class="modal-section"> <h3 class="modal-section-title past-issues"> 관련 과거 이슈 (RAG 분석)</h3> <div id="modal-related-past-issues" class="modal-highlight-box past-issues"></div> </div>
+            </div>
+            <div class="modal-section"> <h3 class="modal-section-title summary"> RAG 분석 요약</h3> <div id="modal-rag-summary" class="modal-highlight-box summary"></div> </div>
+            <div class="modal-footer"> <strong>분석 정보:</strong> <span>벡터 유사도 검색 + GPT-4o AI 분석</span> | <span>Pinecone 벡터DB 활용</span> | <span id="analysis-timestamp"></span> </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 기존 index.html 스크립트 (수정 없음) ---
+        let currentIssues = [];
+        let isRefreshing = false;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTodayDate();
+            loadCurrentIssues();
+            setupRefreshButton();
+            setupModalEvents();
+        });
+
+        function setupModalEvents() {
+            const modal = document.getElementById('ai-analysis-modal');
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeAIAnalysisModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('show')) closeAIAnalysisModal(); });
+        }
+
+        function updateTodayDate() {
+            const today = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            document.getElementById('today-date').textContent = today.toLocaleDateString('ko-KR', options);
+            document.getElementById('last-update-time').textContent = today.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function normalizeStockRelevanceScore(score) {
+            if (score === undefined || score === null) return 'N/A';
+            const numScore = parseFloat(score);
+            if (numScore > 10) return Math.min(10, numScore / 5).toFixed(1);
+            return Math.max(0, Math.min(10, numScore)).toFixed(1);
+        }
+
+        async function loadCurrentIssues() {
+            if (isRefreshing) return;
+            isRefreshing = true;
+            const loadingEl = document.getElementById('loading-state');
+            loadingEl.style.display = 'block';
+            loadingEl.innerHTML = `<div style="text-align: center; padding: 2rem;"><div class="spinner"></div><p> AI가 선별한 이슈를 불러오는 중...</p></div>`;
+
+            try {
+                const response = await fetch('/api/news/latest');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const result = await response.json();
+                console.log(' API 응답 데이터:', result);
+
+                let issuesData = [];
+                if (result && Array.isArray(result.selected_issues)) {
+                    issuesData = result.selected_issues;
+                } else if (result && result.data && Array.isArray(result.data.issues)) {
+                    issuesData = result.data.issues;
+                } else if (result && result.data && Array.isArray(result.data.selected_issues)) {
+                    issuesData = result.data.selected_issues;
+                }
+
+                if (issuesData.length === 0) {
+                    throw new Error('API 응답에서 이슈 데이터를 찾을 수 없습니다.');
+                }
+                
+                currentIssues = issuesData.map((issue, index) => ({
+                    ...issue,
+                    종합점수: issue.주식시장_관련성_점수 !== undefined ? issue.주식시장_관련성_점수 : (issue.종합점수 || 0),
+                    ranking: issue.rank || index + 1
+                }));
+                
+                displayIssues(currentIssues);
+                updateIssueCounts(currentIssues.length);
+                showNotification(` AI가 선별한 ${currentIssues.length}개 핵심 이슈를 가져왔습니다!`, 'success');
+
+            } catch (error) {
+                console.error(' API 호출 또는 데이터 처리 실패:', error);
+                loadingEl.innerHTML = `<div style="text-align: center; padding: 2rem;"><p style="color: #dc3545; margin-bottom: 1rem;">⚠️ 데이터를 불러올 수 없습니다.</p><button onclick="loadCurrentIssues()" style="background: #FF6B6B; color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer;"> 다시 시도</button></div>`;
+                showNotification(' 데이터를 불러오는데 실패했습니다. 다시 시도해주세요.', 'error');
+            } finally {
+                isRefreshing = false;
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        function updateIssueCounts(count) {
+            document.querySelectorAll('#issue-count, #grid-issue-count').forEach(el => el.textContent = count);
+        }
+
+        function displayIssues(issues) {
+            const grid = document.getElementById('issues-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            // mypage.html에서 사용할 북마크 정보를 localStorage에서 가져옵니다.
+            const bookmarkedIssues = JSON.parse(localStorage.getItem('bookmarkedIssues')) || [];
+
+            issues.forEach((issue, index) => {
+                const card = document.createElement('div');
+                card.className = 'issue-card';
+                
+                const score = parseFloat(normalizeStockRelevanceScore(issue.종합점수));
+                const scoreColor = score < 5 ? '#dc3545' : score < 7 ? '#ffc107' : '#28a745';
+
+                // 북마크 여부를 확인합니다. (여기서는 제목을 고유 ID처럼 사용)
+                const isBookmarked = bookmarkedIssues.some(b => b.제목 === issue.제목);
+
+                // --- ▼▼▼ 여기가 요청대로 수정된 부분입니다 ▼▼▼ ---
+                card.innerHTML = `
+                    <div class="issue-header">
+                        <div class="issue-number" style="background: ${scoreColor}; color: white;">${score.toFixed(1)}/10</div>
+                        
+                        <div class="issue-bookmark ${isBookmarked ? 'bookmarked' : ''}" onclick="bookmarkIssue(this, ${index})">
+                            ${isBookmarked ? '★' : '☆'}
+                        </div>
+                    </div>
+                    <div class="issue-title">${issue.제목 || '제목 없음'}</div>
+                    <div class="issue-content">${(issue.내용 || '').substring(0, 150)}...</div>
+                    <div class="issue-footer"> 
+                        <button class="analyze-btn" onclick="showAIAnalysisModal(${index})">AI 분석 보기</button>
+                    </div>`;
+
+                grid.appendChild(card);
+            });
+        }
+        
+        function bookmarkIssue(element, issueIndex) {
+            // 이벤트 버블링을 막아, 별을 눌렀을 때 카드 전체가 눌리는 것을 방지합니다.
+            event.stopPropagation(); 
+
+            const issueToBookmark = currentIssues[issueIndex];
+            let bookmarkedIssues = JSON.parse(localStorage.getItem('bookmarkedIssues')) || [];
+
+            // 이미 북마크된 이슈인지 확인합니다.
+            const existingIndex = bookmarkedIssues.findIndex(b => b.제목 === issueToBookmark.제목);
+
+            if (existingIndex > -1) {
+                // 이미 북마크 되어있다면 -> 북마크 해제
+                bookmarkedIssues.splice(existingIndex, 1); // 배열에서 제거
+                element.innerHTML = '☆'; // 빈 별로 변경
+                element.classList.remove('bookmarked');
+                showNotification(`'${issueToBookmark.제목}' 북마크를 해제했습니다.`, 'info');
+            } else {
+                // 북마크 되어있지 않다면 -> 북마크 추가
+                bookmarkedIssues.push(issueToBookmark); // 배열에 추가
+                element.innerHTML = '★'; // 채워진 별로 변경
+                element.classList.add('bookmarked');
+                showNotification(`'${issueToBookmark.제목}' 이슈를 저장했습니다!`, 'success');
+            }
+
+            // 변경된 북마크 목록을 localStorage에 다시 저장합니다.
+            localStorage.setItem('bookmarkedIssues', JSON.stringify(bookmarkedIssues));
+        }
+
+        function showAIAnalysisModal(issueIndex) {
+            const issue = currentIssues[issueIndex];
+            if (!issue) return;
+
+            const modal = document.getElementById('ai-analysis-modal');
+            document.getElementById('modal-issue-title').textContent = issue.제목;
+            document.getElementById('modal-issue-content').textContent = issue.내용;
+            document.getElementById('score-value').textContent = normalizeStockRelevanceScore(issue.종합점수);
+            
+            const ragDetails = issue.RAG분석신뢰도 || {};
+            document.getElementById('rag-confidence').innerHTML = (ragDetails.consistency_score !== undefined) 
+                ? `일관성: ${ragDetails.consistency_score}/10, 최고연관도: ${ragDetails.peak_relevance_score}/10` 
+                : 'N/A';
+            
+            setupEnhancedScoreBreakdown(issue);
+            displayIndustriesWithFactCheck(issue);
+            displayPastIssuesWithSimulation(issue);
+            displayEnhancedRAGSummary(issue);
+            
+            document.getElementById('analysis-timestamp').textContent = `분석 시간: ${new Date(issue.추출시간).toLocaleString('ko-KR')}`;
+            modal.classList.add('show');
+        }
+
+        function setupEnhancedScoreBreakdown(issue) {
+            const analysisData = issue.관련성_분석 || {};
+            const scoreFields = {
+                'direct-company': '직접적_기업영향', 'policy': '정책적_영향',
+                'market-sentiment': '시장_심리_영향', 'macro-economic': '거시경제_영향',
+                'industry-trend': '산업_트렌드_영향'
+            };
+            let scores = {};
+            for (const key in scoreFields) {
+                const fieldName = scoreFields[key];
+                const score = analysisData[fieldName];
+                const reason = analysisData[fieldName + '_근거'];
+                document.getElementById(`${key}-score`).textContent = score !== undefined ? score : 'N/A';
+                document.getElementById(`${key}-reason`).textContent = reason || getDefaultReason(fieldName, score);
+                scores[fieldName] = score;
+            }
+            displayScoreCalculationMethod(issue, scores, analysisData);
+        }
+
+        function displayScoreCalculationMethod(issue, scores, analysisData) {
+            const totalScore = issue.종합점수;
+            const validScores = Object.values(scores).filter(s => s !== 'N/A' && !isNaN(s)).map(s => parseFloat(s));
+            const calcMethod = (analysisData && analysisData.종합점수_계산방식) || '';
+            let calcText = '', methodText = '';
+
+            if (validScores.length > 0) {
+                const sum = validScores.reduce((a, b) => a + b, 0);
+                if (calcMethod.toLowerCase() === '합계' || Math.abs(sum - totalScore) < 1) {
+                    calcText = `${validScores.join(' + ')} = ${sum.toFixed(1)}점`;
+                    methodText = `5개 항목 합계 방식 (총점: ${totalScore}점/50점)`;
+                } else {
+                    calcText = `AI 독자 계산: ${totalScore}점`;
+                    methodText = `AI가 종합 분석하여 독자적으로 계산한 점수`;
+                }
+                if (totalScore > 10) calcText += ` → ${normalizeStockRelevanceScore(totalScore)}점 (10점 만점 정규화)`;
+            } else {
+                calcText = `총점: ${totalScore}점`;
+                methodText = '세부 점수 정보가 제공되지 않았습니다.';
+            }
+            document.getElementById('total-calculation').textContent = calcText;
+            document.getElementById('calculation-method').textContent = methodText;
+        }
+
+        function displayIndustriesWithFactCheck(issue) {
+            const industriesDiv = document.getElementById('modal-related-industries');
+            const relatedIndustries = (issue.관련산업 || []).slice(0, 3);
+            
+            if (Array.isArray(relatedIndustries) && relatedIndustries.length > 0) {
+                industriesDiv.innerHTML = relatedIndustries.map((industry, idx) => {
+                    const verification = industry.verification || {};
+                    const isVerified = verification.is_grounded === true;
+                    const verificationIcon = isVerified ? '' : '⚠️';
+                    const verificationText = isVerified ? '팩트체킹 통과' : '근거 부족';
+                    const verificationColor = isVerified ? '#28a745' : '#ffc107';
+                    const supportingQuote = verification.supporting_quote || '';
+                    const unverifiedReason = verification.unverified_reason || '';
+
+                    return `
+                        <div class="modal-item" style="border-left: 4px solid ${verificationColor};">
+                            <div class="modal-item-title">
+                                <span>${idx + 1}. ${industry.name || '산업명 없음'}</span>
+                                <span class="modal-item-score">최종: ${industry.final_score || 'N/A'}/10</span>
+                            </div>
+                            <div class="verification-result" style="background: ${isVerified ? '#f8fff9' : '#fff8f0'}; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                                    <span>${verificationIcon}</span><strong style="color: ${verificationColor};">${verificationText}</strong>
+                                </div>
+                                ${supportingQuote ? `<div style="font-style: italic; color: #666; font-size: 0.9rem;">"뉴스 근거: ${supportingQuote}"</div>` : ''}
+                                ${!isVerified && unverifiedReason ? `<div style="font-style: italic; color: #856404; font-size: 0.9rem;">(사유: ${unverifiedReason})</div>` : ''}
+                            </div>
+                            <div class="modal-item-reason"><strong>AI 분석 근거:</strong> ${industry.ai_reason || '분석 정보 없음'}</div>
+                        </div>`;
+                }).join('');
+            } else { industriesDiv.innerHTML = '<div style="color:#666; text-align:center; padding:2rem;">관련 산업 정보가 없습니다.</div>'; }
+        }
+
+        function displayEnhancedRAGSummary(issue) {
+            const summaryDiv = document.getElementById('modal-rag-summary');
+            const industries = issue.관련산업 || [];
+            const pastIssues = issue.관련과거이슈 || [];
+            const iVerified = industries.filter(i => i.verification?.is_grounded).length;
+            const pVerified = pastIssues.filter(p => p.verification?.is_grounded).length;
+            const totalVerified = iVerified + pVerified;
+            const totalItems = Math.min(industries.length, 3) + Math.min(pastIssues.length, 3);
+            const rag = issue.RAG분석신뢰도 || {};
+            const consistency = rag.consistency_score || 0;
+            const peak = rag.peak_relevance_score || 0;
+            const trustInfo = getTrustLevelInfo(totalVerified, totalItems, consistency, peak);
+
+            summaryDiv.innerHTML = `
+                <div style="line-height:1.6;"><h4 style="margin-bottom:1rem;color:#333;"> RAG 분석 요약</h4>
+                <div style="background:#f8f9fa;padding:1rem;border-radius:6px;margin-bottom:1rem;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div><strong> 신뢰도 지표</strong><br>• 일관성: ${consistency}/10<br>• 최고연관도: ${peak}/10</div>
+                        <div><strong> 팩트체킹</strong><br>• 검증 통과: ${totalVerified}/${totalItems||'N/A'} 개<br>• 성공률: ${totalItems>0?Math.round(totalVerified/totalItems*100):0}%</div>
+                    </div>
+                </div>
+                <div style="margin-bottom:1rem;"><strong> 산업 분석:</strong> ${industries.length}개 발견, ${iVerified}개 팩트체킹 통과</div>
+                <div style="margin-bottom:1rem;"><strong> 과거 이슈:</strong> ${pastIssues.length}개 발견, ${pVerified}개 팩트체킹 통과</div>
+                <div style="background:${trustInfo.color.bg};padding:0.8rem;border-radius:6px;border-left:4px solid ${trustInfo.color.border};">
+                    <strong> 종합 판단:</strong> ${trustInfo.message}
+                </div></div>`;
+        }
+
+        function getTrustLevelInfo(verified, total, consistency, peak) {
+            const verificationRate = total > 0 ? verified / total : 0;
+            const avgScore = (consistency + peak) / 2;
+            if (verificationRate >= 0.8 && avgScore >= 7) return { message: "매우 높은 신뢰도의 분석 결과입니다.", color: { bg: '#e8f5e8', border: '#28a745' } };
+            if (verificationRate >= 0.5 && avgScore >= 5) return { message: "양호한 수준의 분석 결과입니다. 추가 정보와 함께 참고하세요.", color: { bg: '#fff3cd', border: '#ffc107' } };
+            return { message: "낮은 신뢰도의 분석 결과입니다. 참고용으로만 활용하세요.", color: { bg: '#f8d7da', border: '#dc3545' } };
+        }
+
+        function getDefaultReason(category, score) {
+            if (score === 'N/A' || isNaN(score)) return '분석 근거가 제공되지 않았습니다.';
+            const s = parseFloat(score);
+            const r = { '직접적_기업영향': { h: '실적/주가에 직접적 영향 분석', m: '일부 기업에 간접적 영향 예상', l: '직접적 영향 미미' }, '정책적_영향': { h: '정부 정책/규제 변화가 시장에 큰 영향 전망', m: '정책적 요소 있으나 영향 범위 제한적', l: '정책과 관련성 낮음' }, '시장_심리_영향': { h: '투자자 심리에 상당한 영향 예상', m: '일부 투자자 관심 유발 수준', l: '심리 영향 제한적' }, '거시경제_영향': { h: '거시경제 지표에 영향 가능성', m: '거시경제에 일부 영향', l: '거시경제 영향 미미' }, '산업_트렌드_영향': { h: '산업 트렌드를 크게 변화시킬 이슈', m: '특정 산업 트렌드에 일부 영향', l: '산업 트렌드 영향 제한적' } };
+            const catR = r[category] || r['직접적_기업영향'];
+            if (s >= 7) return catR.h; if (s >= 4) return catR.m; return catR.l;
+        }
+
+        function toggleScoreBreakdown() {
+            const section = document.getElementById('score-breakdown-section');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function closeAIAnalysisModal() { document.getElementById('ai-analysis-modal').classList.remove('show'); }
+        function setupRefreshButton() { document.getElementById('refresh-issues-btn')?.addEventListener('click', loadCurrentIssues); }
+        function navigateTo(page) {
+            const pages = {
+                home: '/static/index.html',        // 또는 '/'
+                news: '/static/news.html',
+                sector: '/static/sector.html',
+                company: '/static/company.html',
+                game: '/static/game.html',
+                mypage: '/static/mypage.html'   // 마이페이지 추가
+            };
+            
+            if (pages[page]) {
+                window.location.href = pages[page];
+            }
+        }
+        function showNotification(message, type = 'info') { const colors = { success: '#4CAF50', warning: '#ff9800', error: '#f44336', info: '#2196F3' }; const notification = document.createElement('div'); notification.style.cssText = `position:fixed;top:20px;right:20px;background:${colors[type]||colors.info};color:white;padding:15px 20px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);z-index:10000;font-weight:500;`; notification.innerHTML = `<div><span>${message}</span><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:15px;">×</button></div>`; document.body.appendChild(notification); setTimeout(() => { if (notification.parentElement) notification.remove(); }, 5000); }
+        
+        // ===================================================================
+        //  시뮬레이션 기능 관련 JavaScript 코드 (개선된 버전)
+        // ===================================================================
+
+        async function loadSimulationModal() {
+            if (document.getElementById('simulation-modal-overlay')) return;
+            try {
+                const response = await fetch('/static/simulation_modal.html');
+                if (!response.ok) throw new Error('simulation_modal.html을 찾을 수 없습니다.');
+                const html = await response.text();
+                document.body.insertAdjacentHTML('beforeend', html);
+                
+                document.getElementById('sim-close-btn').addEventListener('click', () => {
+                    document.getElementById('simulation-modal-overlay').classList.remove('show');
+                });
+            } catch (e) {
+                console.error("시뮬레이션 모달 로드 실패:", e);
+                showNotification('시뮬레이션 UI 로딩에 실패했습니다.', 'error');
+            }
+        }
+
+        async function startSimulation(issueName, issueDescription, issueDate) {
+            await loadSimulationModal();
+
+            const modal = document.getElementById('simulation-modal-overlay');
+            const contentArea = document.getElementById('simulation-content-area');
+            
+            contentArea.innerHTML = document.getElementById('simulation-step-1-template').innerHTML;
+            modal.classList.add('show');
+            document.getElementById('sim-issue-name').textContent = issueName;
+            document.getElementById('sim-issue-date').textContent = issueDate;
+
+            try {
+                const response = await fetch('/api/simulation/analyze_industries', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ issue_name: issueName, issue_description: issueDescription })
+                });
+                if (!response.ok) throw new Error(`서버 오류: ${response.statusText}`);
+                const result = await response.json();
+                if (!result.success) throw new Error(result.detail || 'AI 산업 분석 실패');
+                
+                const industryCards = document.getElementById('sim-industry-cards');
+                industryCards.innerHTML = result.data.industries.map(ind => `
+                    <div class="sim-industry-card" onclick="handleIndustrySelection(this, '${issueName.replace(/'/g, "\\'")}', '${issueDate}', '${ind.industry_name.replace(/'/g, "\\'")}')">
+                        <h4>${ind.industry_name}</h4>
+                        <p>${ind.reason}</p>
+                    </div>
+                `).join('');
+
+                document.getElementById('sim-loading').style.display = 'none';
+                document.getElementById('sim-industry-selection').style.display = 'block';
+
+            } catch (error) {
+                document.getElementById('sim-loading').innerHTML = `<p style="color:red;">분석 실패: ${error.message}</p>`;
+            }
+        }
+        
+        async function handleIndustrySelection(cardElement, issueName, issueDate, industryName) {
+            const contentArea = document.getElementById('simulation-content-area');
+            contentArea.innerHTML = document.getElementById('simulation-step-2-template').innerHTML;
+            document.getElementById('sim-selected-industry-name').textContent = industryName;
+            document.getElementById('sim-back-to-step1').onclick = () => startSimulation(issueName, '', issueDate);
+
+            try {
+                const response = await fetch('/api/simulation/analyze_stocks', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ issue_name: issueName, issue_date: issueDate, industry_name: industryName })
+                });
+                if (!response.ok) throw new Error(`서버 오류: ${response.statusText}`);
+                const result = await response.json();
+                if (!result.success) throw new Error(result.detail || 'AI 종목 분석 실패');
+
+                const data = result.data;
+                document.getElementById('sim-ai-stock-analysis-content').innerHTML = data.ai_analysis.related_stocks.map(stock => `<div class="sim-stock-item"><strong>${stock.name} (${stock.ticker})</strong>: ${stock.reason}</div>`).join('');
+                document.getElementById('sim-investment-options').innerHTML = Object.keys(data.tickers).map(ticker => `
+                    <div class="sim-prediction-box">
+                        <h4>${data.tickers[ticker]} (${ticker})</h4>
+                        <div class="sim-prediction-options">
+                            <label class="up"><input type="radio" name="prediction_${ticker}" value="up" required onchange="toggleInvestmentInput(this)"><span> 상승</span></label>
+                            <label class="down"><input type="radio" name="prediction_${ticker}" value="down" onchange="toggleInvestmentInput(this)"><span> 하락</span></label>
+                        </div>
+                        <div class="sim-investment-section" id="investment_${ticker}">
+                            <label> 투자 금액 (원):</label>
+                            <input type="number" name="investment_${ticker}" value="1000000" min="0" step="100000">
+                        </div>
+                    </div>`).join('');
+                document.getElementById('sim-chart-image').src = `data:image/png;base64,${data.chart_image}`;
+                document.getElementById('sim-loading-stocks').style.display = 'none';
+                document.getElementById('sim-stock-selection').style.display = 'block';
+                document.getElementById('simulation-form').onsubmit = (e) => { e.preventDefault(); handleSimulationSubmit(e.target, issueName, issueDate, data.tickers); };
+
+            } catch (error) {
+                document.getElementById('sim-loading-stocks').innerHTML = `<p style="color:red;">종목 분석 실패: ${error.message}</p>`;
+            }
+        }
+
+        function toggleInvestmentInput(radio) {
+            const ticker = radio.name.split('_')[1];
+            const investmentSection = document.getElementById(`investment_${ticker}`);
+            const amountInput = investmentSection.querySelector('input[type="number"]');
+            if (radio.value === 'up') {
+                investmentSection.classList.add('show');
+                amountInput.value = '1000000';
+            } else {
+                investmentSection.classList.remove('show');
+                amountInput.value = '0';
+            }
+        }
+
+        async function handleSimulationSubmit(form, issueName, issueDate, tickers) {
+            const contentArea = document.getElementById('simulation-content-area');
+            contentArea.innerHTML = `<div style="text-align:center;padding:3rem;"><div class="spinner"></div><p>결과 계산 중...</p></div>`;
+
+            const payload = { issue_name: issueName, issue_date: issueDate, tickers, predictions: {}, investments: {} };
+            const formData = new FormData(form);
+            for (const ticker of Object.keys(tickers)) {
+                payload.predictions[ticker] = formData.get(`prediction_${ticker}`);
+                payload.investments[ticker] = parseFloat(formData.get(`investment_${ticker}`) || 0);
+            }
+
+            try {
+                const response = await fetch('/api/simulation/calculate_result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw new Error('결과 계산 실패');
+                const result = await response.json();
+                if (!result.success) throw new Error(result.detail || '결과 계산 실패');
+
+                const data = result.data;
+                contentArea.innerHTML = document.getElementById('simulation-step-3-template').innerHTML;
+                document.getElementById('sim-result-issue-name').textContent = data.issue_name;
+                document.getElementById('sim-result-chart-image').src = `data:image/png;base64,${data.chart_image}`;
+                
+                const grid = document.getElementById('sim-results-grid');
+                grid.innerHTML = Object.keys(data.tickers).map(ticker => {
+                    const res = data.investment_results[ticker];
+                    const pred = data.predictions[ticker];
+                    const isCorrect = pred === res.status;
+                    return `<div class="sim-result-card"><h4>${data.tickers[ticker]}</h4><p>나의 예측: <span class="${isCorrect ? 'correct' : 'incorrect'}">${pred === 'up' ? '상승' : '하락'}</span></p><p>실제 결과: <span class="${res.status}">${res.status === 'up' ? '상승' : '하락'}</span></p><p>수익률: <span class="${res.profit_loss >= 0 ? 'profit' : 'loss'}">${res.return_rate.toFixed(2)}%</span></p><p>손익: <span class="${res.profit_loss >= 0 ? 'profit' : 'loss'}">${Math.round(res.profit_loss).toLocaleString()} 원</span></p></div>`;
+                }).join('');
+
+                document.getElementById('sim-total-investment').textContent = Math.round(data.total_investment).toLocaleString();
+                document.getElementById('sim-total-final-value').textContent = Math.round(data.total_final_value).toLocaleString();
+                document.getElementById('sim-total-profit-loss').innerHTML = `<span class="${data.total_profit_loss >= 0 ? 'profit' : 'loss'}">${Math.round(data.total_profit_loss).toLocaleString()}</span>`;
+                document.getElementById('sim-prediction-accuracy').textContent = data.prediction_accuracy.toFixed(1);
+                
+                document.getElementById('sim-ai-commentary-content').innerHTML = data.ai_commentary.replace(/\n/g, '<br>');
+
+                //  [수정] 결과 화면이 그려진 후, 버튼을 찾아 이벤트 리스너를 연결합니다.
+                const restartBtn = document.getElementById('sim-restart-btn');
+                if(restartBtn) {
+                    restartBtn.onclick = () => document.getElementById('simulation-modal-overlay').classList.remove('show');
+                }
+
+            } catch (error) {
+                contentArea.innerHTML = `<p style="color:red;">결과를 가져오지 못했습니다: ${error.message}</p>`;
+            }
+        }
+
+        /**
+         * [대체] 과거 이슈 목록을 표시할 때, startSimulation 함수를 호출하도록 onclick 이벤트를 수정합니다.
+         */
+        function displayPastIssuesWithSimulation(issue) {
+            const pastIssuesDiv = document.getElementById('modal-related-past-issues');
+            const relatedPastIssues = (issue.관련과거이슈 || []).slice(0, 3);
+            
+            if (Array.isArray(relatedPastIssues) && relatedPastIssues.length > 0) {
+                pastIssuesDiv.innerHTML = relatedPastIssues.map((pastIssue, idx) => {
+                    const issueName = pastIssue.name || '이름 없음';
+                    const issueDesc = pastIssue.description || '';
+                    const period = pastIssue.period || '';
+                    let issueDate = 'N/A';
+                    const dateMatch = period.match(/\d{4}-\d{2}-\d{2}/);
+                    if (dateMatch) issueDate = dateMatch[0];
+
+                    const escapedName = issueName.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const escapedDesc = issueDesc.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    const verification = pastIssue.verification || {};
+                    const isVerified = verification.is_grounded === true;
+                    const verificationColor = isVerified ? '#28a745' : '#ffc107';
+                    const verificationIcon = isVerified ? '' : '⚠️';
+                    const verificationText = isVerified ? '팩트체킹 통과' : '근거 부족';
+                    const supportingQuote = verification.supporting_quote || '';
+                    const unverifiedReason = verification.unverified_reason || '';
+
+                    return `
+                        <div class="modal-item" style="border-left: 4px solid ${verificationColor};">
+                            <div class="modal-item-title">
+                                <span>${idx + 1}. ${pastIssue.name}</span>
+                                <span class="modal-item-score">(점수: ${pastIssue.final_score || 'N/A'}/10)</span>
+                            </div>
+                             <div class="verification-result" style="background: ${isVerified ? '#f8fff9' : '#fff8f0'}; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;">
+                                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;">
+                                    <span>${verificationIcon}</span><strong style="color: ${verificationColor};">${verificationText}</strong>
+                                </div>
+                                ${supportingQuote ? `<div style="font-style: italic; color: #666; font-size: 0.9rem;">"뉴스 근거: ${supportingQuote}"</div>` : ''}
+                                ${!isVerified && unverifiedReason ? `<div style="font-style: italic; color: #856404; font-size: 0.9rem;">(사유: ${unverifiedReason})</div>` : ''}
+                            </div>
+                            <div class="modal-item-reason"><strong>유사성 근거:</strong> ${pastIssue.ai_reason || '분석 정보 없음'}</div>
+                            <div class="modal-item-meta" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 0.5rem; margin-top: 0.5rem;">
+                                <div><div>발생 기간: ${period}</div></div>
+                                <button 
+                                    onclick="startSimulation('${escapedName}', '${escapedDesc}', '${issueDate}')" 
+                                    class="simulation-btn"
+                                    ${issueDate === 'N/A' ? 'disabled title="정확한 날짜 정보가 없어 시뮬레이션이 불가능합니다."' : ''}>
+                                     시뮬레이션
+                                </button>
+                            </div>
+                        </div>`;
+                }).join('');
+            } else {
+                pastIssuesDiv.innerHTML = '<div style="color:#666; text-align:center; padding:2rem;">관련 과거 이슈가 없습니다.</div>';
+            }
+        }
+    </script>
+</body>
+</html>

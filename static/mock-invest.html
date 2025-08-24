@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오르다 - 모의투자</title>
+    
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/page.css">
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="logo-section">
+                <div class="logo">오르다</div>
+                <div class="logo-subtitle">투자 학습 플랫폼</div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="navigateTo('home')">
+                    <span class="nav-icon"></span><span>Home</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('news')">
+                    <span class="nav-icon"></span><span>News</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('sector')">
+                    <span class="nav-icon"></span><span>Sector</span>
+                </div>
+                <div class="nav-item" onclick="navigateTo('company')">
+                    <span class="nav-icon"></span><span>Company</span>
+                </div>
+                <div class="nav-item active" onclick="navigateTo('mock-invest')">
+                    <span class="nav-icon"></span><span>Mock Invest</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="page-header">
+                <div class="breadcrumb">Home → Mock Invest</div>
+                <h1 class="page-title"> 모의투자 시뮬레이션</h1>
+                <p class="page-subtitle">과거 이슈 시점으로 돌아가 "만약 그때 투자했다면?"을 체험해보세요.</p>
+            </div>
+            
+            <div class="simulation-steps">
+                <div class="step active" id="step-1"><span>1️⃣</span><span>시나리오 선택</span></div>
+                <div class="step inactive" id="step-2"><span>2️⃣</span><span>투자 설정</span></div>
+                <div class="step inactive" id="step-3"><span>3️⃣</span><span>종목 선택</span></div>
+                <div class="step inactive" id="step-4"><span>4️⃣</span><span>시뮬레이션</span></div>
+                <div class="step inactive" id="step-5"><span>5️⃣</span><span>결과 분석</span></div>
+            </div>
+            
+            <div id="step-content">
+                <div class="scenario-section" id="scenario-section">
+                    <h2 class="section-title"> 과거 이슈 시나리오 선택</h2>
+                    <div class="scenarios-grid" id="scenarios-container"></div>
+                </div>
+                <div class="investment-setup" id="investment-setup" style="display: none;">
+                    </div>
+                <div class="stock-selection" id="stock-selection" style="display: none;">
+                    </div>
+                <div class="simulation-run" id="simulation-run" style="display: none;">
+                    </div>
+                <div class="results-section" id="results-section" style="display: none;">
+                    </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-secondary" id="back-btn" onclick="prevStep()" style="display:none;">이전 단계</button>
+                <button class="btn btn-primary" id="next-btn" onclick="nextStep()" disabled>다음 단계</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- 전역 상태 변수 ---
+        let currentStep = 1;
+        let scenariosData = [];
+        let simulationState = {
+            scenarioId: null,
+            investmentAmount: 1000000,
+            investmentPeriod: 3,
+            selectedStocks: []
+        };
+
+        // --- 초기 실행 ---
+        document.addEventListener('DOMContentLoaded', loadScenarios);
+
+        // --- API 호출 ---
+        async function loadScenarios() {
+            const container = document.getElementById('scenarios-container');
+            container.innerHTML = `<div class="loading"><div class="spinner"></div><p>시나리오 목록을 불러오는 중...</p></div>`;
+            try {
+                // [수정] 시나리오 목록 API 호출
+                const response = await fetch('/api/simulations/scenarios');
+                if (!response.ok) throw new Error('시나리오 로드 실패');
+                scenariosData = await response.json();
+                displayScenarios(scenariosData);
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="loading"><p style="color:red;">${error.message}</p></div>`;
+            }
+        }
+
+        async function loadScenarioDetails(scenarioId) {
+            const container = document.getElementById('stock-selection');
+            container.innerHTML = `<div class="loading"><div class="spinner"></div><p>추천 종목을 불러오는 중...</p></div>`;
+            try {
+                // [수정] 시나리오 상세 정보 및 추천 종목 API 호출
+                const response = await fetch(`/api/simulations/scenarios/${scenarioId}`);
+                if (!response.ok) throw new Error('시나리오 상세 정보 로드 실패');
+                const details = await response.json();
+                displayStockSelection(details.recommended_stocks);
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="loading"><p style="color:red;">${error.message}</p></div>`;
+            }
+        }
+        
+        async function runSimulation() {
+            const runSection = document.getElementById('simulation-run');
+            runSection.innerHTML = `<div class="loading"><div class="spinner"></div><p>시뮬레이션 API 요청 중...</p></div>`;
+            
+            try {
+                // [수정] 시뮬레이션 실행 API 호출
+                const response = await fetch('/api/simulations/run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(simulationState)
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail.errors.join(', ') || '시뮬레이션 실행 실패');
+                }
+                const results = await response.json();
+                simulationState.results = results; // 결과 저장
+                nextStep(); // 결과 표시 단계로 이동
+            } catch (error) {
+                console.error(error);
+                runSection.innerHTML = `<div class="loading"><p style="color:red;">${error.message}</p><button onclick="resetSimulation()">다시 시작</button></div>`;
+            }
+        }
+
+        // --- UI 렌더링 함수들 ---
+        function displayScenarios(scenarios) {
+            const container = document.getElementById('scenarios-container');
+            container.innerHTML = '';
+            scenarios.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'scenario-card';
+                card.onclick = () => selectScenario(s.id, card);
+                card.innerHTML = `<div class="scenario-date">${s.period}</div><div class="scenario-title">${s.name}</div><p>${s.description}</p>`;
+                container.appendChild(card);
+            });
+        }
+        
+        function displayStockSelection(recommendedStocks) {
+            const container = document.getElementById('stock-selection');
+            let content = `<h2 class="section-title"> 포트폴리오 구성</h2>`;
+            for (const industry in recommendedStocks) {
+                content += `
+                    <div class="industry-section">
+                        <div class="industry-header"><div class="industry-name">${industry}</div></div>
+                        <div class="stocks-grid">
+                            ${recommendedStocks[industry].map(stock => `
+                                <div class="stock-item">
+                                    <input type="checkbox" class="stock-checkbox" data-code="${stock.code}" data-name="${stock.name}" data-industry="${industry}" onchange="toggleStock(this)">
+                                    <div class="stock-info"><div class="stock-name">${stock.name}</div><div class="stock-code">${stock.code}</div></div>
+                                    <input type="number" class="allocation-input" placeholder="%" min="0" max="100" onchange="updateAllocation('${stock.code}', this.value)" disabled>
+                                </div>`).join('')}
+                        </div>
+                    </div>`;
+            }
+            container.innerHTML = content;
+        }
+        
+        function displayResults() {
+            const results = simulationState.results;
+            const container = document.getElementById('results-section');
+            // [수정] 실제 API 결과로 결과 UI를 채웁니다.
+            // ... (기존 results-section의 내부 HTML을 생성하는 코드) ...
+        }
+
+        // --- 상태 관리 및 네비게이션 ---
+        function selectScenario(scenarioId, cardElement) {
+            document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+            cardElement.classList.add('selected');
+            simulationState.scenarioId = scenarioId;
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function nextStep() {
+            if (currentStep >= 5) return;
+            currentStep++;
+            updateUI();
+            if (currentStep === 3) loadScenarioDetails(simulationState.scenarioId);
+            if (currentStep === 4) runSimulation();
+        }
+        
+        function prevStep() {
+            if (currentStep <= 1) return;
+            currentStep--;
+            updateUI();
+        }
+
+        function updateUI() {
+            // 단계별 UI 표시/숨김 및 버튼 상태 관리
+            const sections = ['scenario-section', 'investment-setup', 'stock-selection', 'simulation-run', 'results-section'];
+            sections.forEach((id, index) => {
+                document.getElementById(id).style.display = (index + 1 === currentStep) ? 'block' : 'none';
+            });
+            // ... (나머지 UI 업데이트 로직) ...
+        }
+        
+        function resetSimulation() {
+            // 시뮬레이션 상태 초기화 및 1단계로 이동
+            currentStep = 1;
+            simulationState = { scenarioId: null, investmentAmount: 1000000, investmentPeriod: 3, selectedStocks: [] };
+            updateUI();
+            displayScenarios(scenariosData); // 시나리오 목록 다시 표시
+        }
+        
+       // --- 유틸리티 함수 ---
+        function formatContextForModal(items, type) {
+            if (!items || items.length === 0) {
+                return `<div style="color:#666; text-align:center; padding:2rem;">관련 ${type} 정보가 없습니다.</div>`;
+            }
+            return items.map((item, idx) => `
+                <div style="margin-bottom:1rem; padding-bottom: 1rem; border-bottom: 1px solid #eee;">
+                    <div style="font-weight:bold; margin-bottom:0.5rem;">
+                        ${idx + 1}. ${item.name}
+                    </div>
+                    <div style="color:#666; font-size:0.9rem;">${item.description}</div>
+                </div>
+            `).join('');
+        }
+
+        function getScoreColor(score) {
+            if (score >= 8.5) return '#dc3545';
+            if (score >= 7.0) return '#ffc107';
+            return '#28a745';
+        }
+
+        function updateIssueCounts(count) {
+            document.getElementById('issue-count').textContent = count;
+            document.getElementById('grid-issue-count').textContent = count;
+        }
+
+        function navigateTo(page) {
+            const pages = {
+                'home': '/static/index.html',
+                'news': '/static/news.html', 
+                'sector': '/static/sector.html',
+                'company': '/static/company.html',
+                'mock-invest': '/static/mock-invest.html'
+            };
+            if (page !== 'home') window.location.href = pages[page];
+        }
+
+        function showNotification(message, type = 'info') {
+            // 1. 알림 종류에 따른 색상 맵 정의
+            const colors = {
+                success: 'linear-gradient(135deg, #28a745, #218838)',
+                warning: 'linear-gradient(135deg, #ffc107, #e0a800)',
+                error: 'linear-gradient(135deg, #dc3545, #c82333)',
+                info: 'linear-gradient(135deg, #17a2b8, #138496)'
+            };
+
+            // 2. 알림을 담을 div 요소 생성
+            const notification = document.createElement('div');
+
+            // 3. 알림 창 스타일 지정 (인라인 CSS)
+            notification.style.cssText = `
+                position: fixed; 
+                top: 20px; 
+                right: 20px; 
+                background: ${colors[type] || colors.info}; 
+                color: white; 
+                padding: 16px 24px; 
+                border-radius: 8px; 
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                z-index: 9999;
+                font-weight: 500;
+                max-width: 400px;
+                animation: slideIn 0.4s ease-out;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            `;
+            
+            // Keyframes 애니메이션을 위한 스타일 태그 추가
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideIn {
+                    from { transform: translateX(110%); opacity: 0; }
+                    to { transform: translateX(0); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+
+            // 4. 알림 메시지와 닫기 버튼 추가
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" 
+                        style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1;">
+                    &times;
+                </button>
+            `;
+
+            // 5. body에 알림 창 추가
+            document.body.appendChild(notification);
+            
+            // 6. 5초 후 자동으로 알림 창 제거
+            setTimeout(() => {
+                // 알림 창이 아직 화면에 존재할 경우에만 제거
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+                // 추가했던 스타일 태그도 제거
+                style.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

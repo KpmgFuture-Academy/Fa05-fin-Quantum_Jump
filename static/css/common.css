@@ -1,0 +1,319 @@
+/* static/css/common.css */
+
+/* --- 기본 & 레이아웃 --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* --- 사이드바 --- */
+.sidebar {
+    width: 260px;
+    background: white;
+    border-right: 1px solid #e9ecef;
+    padding: 0;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.logo-section {
+    background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%);
+    color: white;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.logo {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.logo-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.nav-menu {
+    padding: 1.5rem 0;
+}
+
+.nav-item {
+    padding: 1rem 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.nav-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #FF6B6B;
+}
+
+.nav-item.active {
+    background-color: #fff3f3;
+    border-left-color: #FF6B6B;
+    color: #FF6B6B;
+    font-weight: 600;
+}
+
+.nav-icon {
+    font-size: 1.1rem;
+    width: 20px;
+}
+
+/* --- 공통 페이지 헤더 --- */
+.page-header {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.breadcrumb {
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    color: #6c757d;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* --- 공통 섹션 스타일 --- */
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+/* --- 반응형 --- */
+@media (max-width: 768px) {
+    .layout {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        order: 2;
+    }
+    .main-content {
+        order: 1;
+        padding: 1rem;
+    }
+    .page-title {
+        font-size: 1.8rem;
+    }
+}
+
+/* --- AI 분석 모달창 --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none; /* JS로 'flex'로 변경하여 표시 */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-content {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: modal-fade-in 0.3s ease-out;
+}
+
+@keyframes modal-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: #aaa;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.modal-close-btn:hover {
+    color: #333;
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.modal-score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.modal-section {
+    margin-bottom: 2rem;
+}
+
+.modal-section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+.modal-section-title.green { border-color: #28a745; }
+.modal-section-title.red { border-color: #dc3545; }
+.modal-section-title.blue { border-color: #007bff; }
+
+
+.modal-text-box, .modal-highlight-box {
+    padding: 1.2rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.modal-text-box.scrollable {
+    max-height: 150px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+}
+
+.modal-highlight-box {
+    background: #f8f9fa;
+}
+.modal-highlight-box.green { background: #e6f9f1; }
+.modal-highlight-box.red { background: #fbebee; }
+.modal-highlight-box.blue { background: #e7f3ff; }
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.modal-list-item {
+    margin-bottom: 1rem;
+}
+.modal-list-title {
+    font-weight: 600;
+}
+.modal-list-desc {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+.modal-no-data {
+    color: #6c757d;
+    text-align: center;
+    padding: 1rem;
+}
+
+.modal-footer {
+    text-align: right;
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* --- 알림창 (Notification) --- */
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    z-index: 2000;
+    animation: slideIn 0.5s ease;
+}
+.notification button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    opacity: 0.8;
+}
+.notification button:hover {
+    opacity: 1;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* 모바일 화면에서 모달창 조정 */
+@media (max-width: 768px) {
+    .modal-content {
+        padding: 1.5rem;
+    }
+    .modal-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오르다 - 마이페이지</title>
+    <style>
+        /* index.html의 전체 스타일을 그대로 가져와 일관성을 유지합니다. */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f8f9fa; color: #333; }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid #e9ecef; box-shadow: 2px 0 10px rgba(0,0,0,0.05); }
+        .logo-section { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; padding: 1.5rem; text-align: center; }
+        .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem; }
+        .logo-subtitle { font-size: 0.9rem; opacity: 0.9; }
+        .nav-menu { padding: 1.5rem 0; }
+        .nav-item { padding: 1rem 1.5rem; cursor: pointer; transition: all 0.3s ease; border-left: 4px solid transparent; display: flex; align-items: center; gap: 0.8rem; }
+        .nav-item:hover { background-color: #f8f9fa; border-left-color: #FF6B6B; }
+        .nav-item.active { background-color: #fff3f3; border-left-color: #FF6B6B; color: #FF6B6B; font-weight: 600; }
+        .nav-icon { font-size: 1.1rem; width: 20px; }
+        .main-content { flex: 1; padding: 2rem; overflow-y: auto; }
+        .page-header { background: white; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); text-align: center; }
+        .page-title { font-size: 2.5rem; font-weight: 700; color: #2c3e50; margin-bottom: 1rem; }
+        .page-subtitle { color: #6c757d; font-size: 1.1rem; line-height: 1.6; }
+        .issues-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 2rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .section-title { font-size: 1.5rem; font-weight: 600; color: #2c3e50; display: flex; align-items: center; gap: 0.5rem; }
+        
+        /* --- ▼▼▼ 카드 크기 문제 수정을 위한 스타일 수정 ▼▼▼ --- */
+        .issues-grid { 
+            display: grid; 
+            /* auto-fit 대신 auto-fill을 사용하고, 1fr로 늘어나는 것을 제한합니다. */
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .issue-card { 
+            /* 카드의 최대 너비를 지정하여 과도하게 늘어나는 것을 방지합니다. */
+            max-width: 450px;
+            border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; cursor: pointer; 
+            transition: all 0.3s ease; position: relative; background: white; overflow: hidden; 
+        }
+
+        .issue-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-color: #FF6B6B; }
+        .issue-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .issue-score { background: #f8f9fa; color: #6c757d; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .issue-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.8rem; line-height: 1.4; color: #2c3e50; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .issue-content { color: #6c757d; font-size: 0.95rem; line-height: 1.6; margin-bottom: 1rem; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .issue-footer { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+        .analyze-btn { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem; }
+        .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4); }
+        .unbookmark-btn { background: #6c757d; color: white; border: none; padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; }
+        .unbookmark-btn:hover { background: #5a6268; }
+        
+        .stats-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .stats-title { font-size: 1.5rem; font-weight: 600; color: #2c3e50; margin-bottom: 2rem; text-align: left; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; text-align: center; }
+        .stat-item { background: #f8f9fa; border-radius: 8px; padding: 1.5rem; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #FF6B6B; margin-bottom: 0.5rem; }
+        .stat-label { font-size: 0.9rem; color: #6c757d; }
+        .modal-overlay { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; background: rgba(0, 0, 0, 0.7) !important; z-index: 9999 !important; display: none; justify-content: center; align-items: center; overflow-y: auto; }
+        .modal-overlay.show { display: flex !important; }
+        .modal-content { background: white; border-radius: 12px; max-width: 1000px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 2rem; position: relative; margin: 2rem; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); }
+        .modal-close-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 24px; cursor: pointer; color: #666; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: all 0.2s; }
+        .modal-close-btn:hover { background: #f5f5f5; color: #333; }
+        .modal-title { margin: 0 2rem 1.5rem 0; color: #2c3e50; font-size: 1.5rem; font-weight: 600; }
+        .modal-score-section { margin-bottom: 1.5rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+        .modal-content-section { margin-bottom: 2rem; }
+        .modal-content-title { margin-bottom: 0.8rem; color: #333; font-size: 1.1rem; font-weight: 600; }
+        .modal-content-box { background: #f9f9f9; padding: 1rem; border-radius: 8px; line-height: 1.6; color: #555; max-height: 200px; overflow-y: auto; }
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .modal-section-title.industries { color: #FF6B6B; } .modal-section-title.past-issues { color: #667eea; } .modal-section-title.summary { color: #28a745; }
+        .modal-highlight-box { padding: 1rem; border-radius: 8px; min-height: 200px; }
+        .modal-highlight-box.industries { background: #fff3f3; border-left: 4px solid #FF6B6B; } .modal-highlight-box.past-issues { background: #f0f4ff; border-left: 4px solid #667eea; } .modal-highlight-box.summary { background: #f8fff9; border-left: 4px solid #28a745; }
+        .modal-item { margin-bottom: 1rem; padding: 0.8rem; background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        .modal-item-title { font-weight: bold; margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
+        .modal-item-score { font-size: 0.9rem; color: #666; font-weight: normal; }
+        .modal-item-reason { color: #666; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .modal-footer { border-top: 1px solid #eee; padding-top: 1rem; color: #666; font-size: 0.9rem; }
+        .score-breakdown-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .score-item { background: #f8f9fa; padding: 0.8rem; border-radius: 6px; border-left: 3px solid #2196F3; }
+        .score-label { font-weight: 600; color: #333; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .score-value-box { font-size: 1.1rem; font-weight: bold; color: #2196F3; margin-bottom: 0.5rem; }
+        .score-reason { font-size: 0.8rem; color: #666; line-height: 1.4; font-weight: normal; }
+        .verification-result { border-radius: 6px; margin: 0.5rem 0; transition: all 0.2s; }
+        .simulation-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.3rem; font-weight: 600; }
+        .simulation-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="logo-section"><div class="logo">오르다</div><div class="logo-subtitle">투자 학습 플랫폼</div></div>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="navigateTo('home')"> <span class="nav-icon"></span> <span>Home</span> </div>
+                <div class="nav-item active" onclick="navigateTo('mypage')"><span class="nav-icon"></span> <span>My Page</span> </div>
+                <div class="nav-item" onclick="navigateTo('news')"> <span class="nav-icon"></span> <span>News</span> </div>
+                <div class="nav-item" onclick="navigateTo('sector')"> <span class="nav-icon"></span> <span>Sector</span> </div>
+                <div class="nav-item" onclick="navigateTo('company')"> <span class="nav-icon"></span> <span>Company</span> </div>
+                <div class="nav-item" onclick="navigateTo('game')"> <span class="nav-icon"></span> <span>Game</span> </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="page-header"><h1 class="page-title">마이페이지</h1><p class="page-subtitle">저장한 이슈와 나의 게임 기록을 확인해보세요.</p></div>
+            <div class="issues-section">
+                <div class="section-header"><h2 class="section-title">저장한 이슈</h2></div>
+                <div class="issues-grid" id="bookmarked-issues-grid"></div>
+            </div>
+            <div class="stats-section">
+                <h2 class="stats-title"> 나의 게임 통계</h2>
+                <div class="stats-grid">
+                    <div class="stat-item"><div class="stat-value" id="total-plays">0</div><div class="stat-label">총 플레이 횟수</div></div>
+                    <div class="stat-item"><div class="stat-value" id="high-score">0</div><div class="stat-label">최고 점수</div></div>
+                    <div class="stat-item"><div class="stat-value" id="avg-accuracy">0%</div><div class="stat-label">평균 정답률</div></div>
+                    <div class="stat-item"><div class="stat-value" id="badges-earned"> 0</div><div class="stat-label">획득 뱃지</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-analysis-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button onclick="closeAIAnalysisModal()" class="modal-close-btn">&times;</button>
+            <h2 id="modal-issue-title" class="modal-title"></h2>
+            <div class="modal-score-section">
+                <div> <strong> 주식시장 관련성 점수: <span id="score-value"></span>/10</strong> <button onclick="toggleScoreBreakdown()" style="margin-left: 10px; padding: 4px 8px; background: #e3f2fd; border: 1px solid #2196F3; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">📋 세부점수</button> </div>
+                <div> <span style="color:#666;"> RAG 분석 신뢰도: <span id="rag-confidence"></span></span> </div>
+            </div>
+            <div id="score-breakdown-section" class="modal-content-section" style="display: none;">
+                <h3 class="modal-content-title"> AI 채점 근거 및 세부 점수</h3>
+                <div id="score-breakdown-content" class="modal-content-box" style="max-height: 300px;">
+                    <div class="score-breakdown-grid">
+                        <div class="score-item"> <div class="score-label"> 직접적 기업영향</div> <div class="score-value-box"> <span id="direct-company-score"></span>/10 <div id="direct-company-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 정책적 영향</div> <div class="score-value-box"> <span id="policy-score"></span>/10 <div id="policy-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 시장 심리</div> <div class="score-value-box"> <span id="market-sentiment-score"></span>/10 <div id="market-sentiment-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 거시경제</div> <div class="score-value-box"> <span id="macro-economic-score"></span>/10 <div id="macro-economic-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 산업 트렌드</div> <div class="score-value-box"> <span id="industry-trend-score"></span>/10 <div id="industry-trend-reason" class="score-reason"></div> </div> </div>
+                        <div class="score-item"> <div class="score-label"> 종합 계산</div> <div class="score-value-box"> <span id="total-calculation"></span> <div id="calculation-method" class="score-reason"></div> </div> </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-content-section"> <h3 class="modal-content-title"> 원본 이슈 내용</h3> <div id="modal-issue-content" class="modal-content-box"></div> </div>
+            <div class="modal-grid">
+                <div class="modal-section"> <h3 class="modal-section-title industries"> 관련 산업 (RAG 분석)</h3> <div id="modal-related-industries" class="modal-highlight-box industries"></div> </div>
+                <div class="modal-section"> <h3 class="modal-section-title past-issues"> 관련 과거 이슈 (RAG 분석)</h3> <div id="modal-related-past-issues" class="modal-highlight-box past-issues"></div> </div>
+            </div>
+            <div class="modal-section"> <h3 class="modal-section-title summary"> RAG 분석 요약</h3> <div id="modal-rag-summary" class="modal-highlight-box summary"></div> </div>
+            <div class="modal-footer"> <strong>분석 정보:</strong> <span>벡터 유사도 검색 + GPT-4o AI 분석</span> | <span>Pinecone 벡터DB 활용</span> | <span id="analysis-timestamp"></span> </div>
+        </div>
+    </div>
+
+    <script>
+        // 전역 변수: mypage에서는 저장된 이슈 목록이 핵심 데이터가 됩니다.
+        let currentIssues = []; 
+
+        function navigateTo(page) {
+            const pages = {
+                home: '/static/index.html', news: '/static/news.html',
+                sector: '/static/sector.html', company: '/static/company.html',
+                game: '/static/game.html', mypage: '/static/mypage.html'
+
+            };
+            if (pages[page] && window.location.pathname !== pages[page]) {
+                window.location.href = pages[page];
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            renderBookmarkedIssues();
+            renderGameStats();
+            setupModalEvents();
+        });
+
+        function renderBookmarkedIssues() {
+            const grid = document.getElementById('bookmarked-issues-grid');
+            currentIssues = JSON.parse(localStorage.getItem('bookmarkedIssues')) || [];
+
+            if (currentIssues.length === 0) {
+                grid.innerHTML = '<p style="text-align:center; color:#6c757d; padding: 2rem;">저장한 이슈가 없습니다. 홈 화면에서 관심있는 이슈의 ☆를 눌러 저장해보세요!</p>';
+                return;
+            }
+
+            grid.innerHTML = '';
+            currentIssues.forEach((issue, index) => {
+                const card = document.createElement('div');
+                card.className = 'issue-card';
+                
+                const scoreText = normalizeStockRelevanceScore(issue.종합점수);
+                const score = parseFloat(scoreText);
+                const scoreColor = score < 5 ? '#dc3545' : score < 7 ? '#ffc107' : '#28a745';
+
+                card.innerHTML = `
+                    <div class="issue-header">
+                        <div class="issue-score" style="background: ${scoreColor}; color: white;">${scoreText}/10</div>
+                    </div>
+                    <div class="issue-title" onclick="showAIAnalysisModal(${index})">${issue.제목 || '제목 없음'}</div>
+                    <div class="issue-content" onclick="showAIAnalysisModal(${index})">${(issue.내용 || '').substring(0, 150)}...</div>
+                    <div class="issue-footer">
+                        <button class="unbookmark-btn" onclick="unbookmarkIssue(${index})"> 저장 취소</button>
+                        <button class="analyze-btn" onclick="showAIAnalysisModal(${index})"> AI 분석 보기</button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function unbookmarkIssue(index) {
+            event.stopPropagation();
+            const issueToRemove = currentIssues[index];
+            if (confirm(`'${issueToRemove.제목}' 이슈를 저장 목록에서 삭제하시겠습니까?`)) {
+                currentIssues.splice(index, 1);
+                localStorage.setItem('bookmarkedIssues', JSON.stringify(currentIssues));
+                renderBookmarkedIssues();
+            }
+        }
+
+        function renderGameStats() {
+            const stats = JSON.parse(localStorage.getItem('gameStats')) || { totalPlays: 0, highScore: 0, totalCorrect: 0, totalQuestions: 0, badges: 0 };
+            const accuracy = (stats.totalQuestions > 0) ? ((stats.totalCorrect / stats.totalQuestions) * 100).toFixed(1) : 0;
+            document.getElementById('total-plays').textContent = stats.totalPlays;
+            document.getElementById('high-score').textContent = stats.highScore.toLocaleString();
+            document.getElementById('avg-accuracy').textContent = `${accuracy}%`;
+            document.getElementById('badges-earned').textContent = `🏆 ${stats.badges}`;
+        }
+
+        // --- ▼▼▼ index.html에서 가져온 모달 및 분석 관련 모든 함수 ▼▼▼ ---
+        
+        function setupModalEvents() {
+            const modal = document.getElementById('ai-analysis-modal');
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeAIAnalysisModal(); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('show')) closeAIAnalysisModal(); });
+        }
+
+        function normalizeStockRelevanceScore(score) {
+            if (score === undefined || score === null) return 'N/A';
+            const numScore = parseFloat(score);
+            if (isNaN(numScore)) return 'N/A';
+            if (numScore > 10) return Math.min(10, numScore / 5).toFixed(1);
+            return Math.max(0, Math.min(10, numScore)).toFixed(1);
+        }
+
+        function showAIAnalysisModal(issueIndex) {
+            const issue = currentIssues[issueIndex];
+            if (!issue) return;
+
+            const modal = document.getElementById('ai-analysis-modal');
+            document.getElementById('modal-issue-title').textContent = issue.제목;
+            document.getElementById('modal-issue-content').textContent = issue.내용;
+            document.getElementById('score-value').textContent = normalizeStockRelevanceScore(issue.종합점수);
+            
+            const ragDetails = issue.RAG분석신뢰도 || {};
+            document.getElementById('rag-confidence').innerHTML = (ragDetails.consistency_score !== undefined) 
+                ? `일관성: ${ragDetails.consistency_score}/10, 최고연관도: ${ragDetails.peak_relevance_score}/10` 
+                : 'N/A';
+            
+            setupEnhancedScoreBreakdown(issue);
+            displayIndustriesWithFactCheck(issue);
+            displayPastIssuesWithSimulation(issue);
+            displayEnhancedRAGSummary(issue);
+            
+            document.getElementById('analysis-timestamp').textContent = `분석 시간: ${new Date(issue.추출시간).toLocaleString('ko-KR')}`;
+            modal.classList.add('show');
+        }
+
+        function setupEnhancedScoreBreakdown(issue) {
+            const analysisData = issue.관련성_분석 || {};
+            const scoreFields = { 'direct-company': '직접적_기업영향', 'policy': '정책적_영향', 'market-sentiment': '시장_심리_영향', 'macro-economic': '거시경제_영향', 'industry-trend': '산업_트렌드_영향' };
+            let scores = {};
+            for (const key in scoreFields) {
+                const fieldName = scoreFields[key];
+                const score = analysisData[fieldName];
+                const reason = analysisData[fieldName + '_근거'];
+                document.getElementById(`${key}-score`).textContent = score !== undefined ? score : 'N/A';
+                document.getElementById(`${key}-reason`).textContent = reason || getDefaultReason(fieldName, score);
+                scores[fieldName] = score;
+            }
+            displayScoreCalculationMethod(issue, scores, analysisData);
+        }
+
+        function displayScoreCalculationMethod(issue, scores, analysisData) {
+            const totalScore = issue.종합점수;
+            const validScores = Object.values(scores).filter(s => s !== 'N/A' && !isNaN(s)).map(s => parseFloat(s));
+            const calcMethod = (analysisData && analysisData.종합점수_계산방식) || '';
+            let calcText = '', methodText = '';
+
+            if (validScores.length > 0) {
+                const sum = validScores.reduce((a, b) => a + b, 0);
+                if (calcMethod.toLowerCase() === '합계' || Math.abs(sum - totalScore) < 1) {
+                    calcText = `${validScores.join(' + ')} = ${sum.toFixed(1)}점`;
+                    methodText = `5개 항목 합계 방식 (총점: ${totalScore}점/50점)`;
+                } else {
+                    calcText = `AI 독자 계산: ${totalScore}점`;
+                    methodText = `AI가 종합 분석하여 독자적으로 계산한 점수`;
+                }
+                if (totalScore > 10) calcText += ` → ${normalizeStockRelevanceScore(totalScore)}점 (10점 만점 정규화)`;
+            } else {
+                calcText = `총점: ${normalizeStockRelevanceScore(totalScore)}점`;
+                methodText = '세부 점수 정보가 제공되지 않았습니다.';
+            }
+            document.getElementById('total-calculation').textContent = calcText;
+            document.getElementById('calculation-method').textContent = methodText;
+        }
+
+        function displayIndustriesWithFactCheck(issue) {
+            const industriesDiv = document.getElementById('modal-related-industries');
+            const relatedIndustries = (issue.관련산업 || []).slice(0, 3);
+            if (Array.isArray(relatedIndustries) && relatedIndustries.length > 0) {
+                industriesDiv.innerHTML = relatedIndustries.map((industry, idx) => {
+                    const verification = industry.verification || {};
+                    const isVerified = verification.is_grounded === true;
+                    const verificationIcon = isVerified ? '✅' : '⚠️';
+                    const verificationText = isVerified ? '팩트체킹 통과' : '근거 부족';
+                    const verificationColor = isVerified ? '#28a745' : '#ffc107';
+                    const supportingQuote = verification.supporting_quote || '';
+                    const unverifiedReason = verification.unverified_reason || '';
+                    return `<div class="modal-item" style="border-left: 4px solid ${verificationColor};"><div class="modal-item-title"><span>${idx + 1}. ${industry.name || '산업명 없음'}</span><span class="modal-item-score">최종: ${industry.final_score || 'N/A'}/10</span></div><div class="verification-result" style="background: ${isVerified ? '#f8fff9' : '#fff8f0'}; padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;"><div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem;"><span>${verificationIcon}</span><strong style="color: ${verificationColor};">${verificationText}</strong></div>${supportingQuote ? `<div style="font-style: italic; color: #666; font-size: 0.9rem;">"뉴스 근거: ${supportingQuote}"</div>` : ''}${!isVerified && unverifiedReason ? `<div style="font-style: italic; color: #856404; font-size: 0.9rem;">(사유: ${unverifiedReason})</div>` : ''}</div><div class="modal-item-reason"><strong>AI 분석 근거:</strong> ${industry.ai_reason || '분석 정보 없음'}</div></div>`;
+                }).join('');
+            } else { industriesDiv.innerHTML = '<div style="color:#666; text-align:center; padding:2rem;">관련 산업 정보가 없습니다.</div>'; }
+        }
+
+        function displayPastIssuesWithSimulation(issue) {
+            const pastIssuesDiv = document.getElementById('modal-related-past-issues');
+            pastIssuesDiv.innerHTML = '<div style="color:#666; text-align:center; padding:2rem;">과거 이슈 시뮬레이션은 홈에서만 제공됩니다.</div>';
+        }
+
+        function displayEnhancedRAGSummary(issue) {
+            const summaryDiv = document.getElementById('modal-rag-summary');
+            const industries = issue.관련산업 || [];
+            const pastIssues = issue.관련과거이슈 || [];
+            const iVerified = industries.filter(i => i.verification?.is_grounded).length;
+            const pVerified = pastIssues.filter(p => p.verification?.is_grounded).length;
+            const totalVerified = iVerified + pVerified;
+            const totalItems = Math.min(industries.length, 3) + Math.min(pastIssues.length, 3);
+            const rag = issue.RAG분석신뢰도 || {};
+            const consistency = rag.consistency_score || 0;
+            const peak = rag.peak_relevance_score || 0;
+            const trustInfo = getTrustLevelInfo(totalVerified, totalItems, consistency, peak);
+            summaryDiv.innerHTML = `<div style="line-height:1.6;"><h4 style="margin-bottom:1rem;color:#333;">🔍 RAG 분석 요약</h4><div style="background:#f8f9fa;padding:1rem;border-radius:6px;margin-bottom:1rem;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;"><div><strong>📊 신뢰도 지표</strong><br>• 일관성: ${consistency}/10<br>• 최고연관도: ${peak}/10</div><div><strong>✅ 팩트체킹</strong><br>• 검증 통과: ${totalVerified}/${totalItems||'N/A'} 개<br>• 성공률: ${totalItems>0?Math.round(totalVerified/totalItems*100):0}%</div></div></div><div style="margin-bottom:1rem;"><strong>🏭 산업 분석:</strong> ${industries.length > 0 ? `${industries.length}개 발견, ${iVerified}개 팩트체킹 통과` : '정보 없음'}</div><div style="margin-bottom:1rem;"><strong>📚 과거 이슈:</strong> ${pastIssues.length > 0 ? `${pastIssues.length}개 발견, ${pVerified}개 팩트체킹 통과` : '정보 없음'}</div><div style="background:${trustInfo.color.bg};padding:0.8rem;border-radius:6px;border-left:4px solid ${trustInfo.color.border};"><strong>💡 종합 판단:</strong> ${trustInfo.message}</div></div>`;
+        }
+
+        function getTrustLevelInfo(verified, total, consistency, peak) {
+            const verificationRate = total > 0 ? verified / total : 0;
+            const avgScore = (consistency + peak) / 2;
+            if (verificationRate >= 0.8 && avgScore >= 7) return { message: "매우 높은 신뢰도의 분석 결과입니다.", color: { bg: '#e8f5e8', border: '#28a745' } };
+            if (verificationRate >= 0.5 && avgScore >= 5) return { message: "양호한 수준의 분석 결과입니다. 추가 정보와 함께 참고하세요.", color: { bg: '#fff3cd', border: '#ffc107' } };
+            return { message: "낮은 신뢰도의 분석 결과입니다. 참고용으로만 활용하세요.", color: { bg: '#f8d7da', border: '#dc3545' } };
+        }
+
+        function getDefaultReason(category, score) {
+            if (score === 'N/A' || isNaN(score)) return '분석 근거가 제공되지 않았습니다.';
+            const s = parseFloat(score);
+            const r = { '직접적_기업영향': { h: '실적/주가에 직접적 영향 분석', m: '일부 기업에 간접적 영향 예상', l: '직접적 영향 미미' }, '정책적_영향': { h: '정부 정책/규제 변화가 시장에 큰 영향 전망', m: '정책적 요소 있으나 영향 범위 제한적', l: '정책과 관련성 낮음' }, '시장_심리_영향': { h: '투자자 심리에 상당한 영향 예상', m: '일부 투자자 관심 유발 수준', l: '심리 영향 제한적' }, '거시경제_영향': { h: '거시경제 지표에 영향 가능성', m: '거시경제에 일부 영향', l: '거시경제 영향 미미' }, '산업_트렌드_영향': { h: '산업 트렌드를 크게 변화시킬 이슈', m: '특정 산업 트렌드에 일부 영향', l: '산업 트렌드 영향 제한적' } };
+            const catR = r[category] || r['직접적_기업영향'];
+            if (s >= 7) return catR.h; if (s >= 4) return catR.m; return catR.l;
+        }
+        
+        function toggleScoreBreakdown() {
+            const section = document.getElementById('score-breakdown-section');
+            section.style.display = section.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function closeAIAnalysisModal() { 
+            document.getElementById('ai-analysis-modal').classList.remove('show'); 
+        }
+    </script>
+</body>
+</html>

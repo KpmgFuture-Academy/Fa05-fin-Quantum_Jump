@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>오르다 - 산업 분석</title>
+    <link rel="stylesheet" href="/static/css/common.css">
+    <link rel="stylesheet" href="/static/css/page.css">
+    <style>
+        /* 더미 데이터 버전의 카드 디자인을 위한 CSS를 여기에 추가합니다. */
+        .sectors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .sector-card { border: 2px solid #e9ecef; border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden; background: white; }
+        .sector-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(0,0,0,0.15); border-color: #FF6B6B; }
+        .sector-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; opacity: 0; transition: opacity 0.3s ease; }
+        .sector-card:hover::before { opacity: 1; }
+        .sector-tech::before { background: linear-gradient(90deg, #74b9ff, #0984e3); }
+        .sector-finance::before { background: linear-gradient(90deg, #a8e6cf, #56ca85); }
+        .sector-energy::before { background: linear-gradient(90deg, #ffeaa7, #fdcb6e); }
+        .sector-healthcare::before { background: linear-gradient(90deg, #fd79a8, #e84393); }
+        .sector-consumer::before { background: linear-gradient(90deg, #fab1a0, #e17055); }
+        .sector-materials::before { background: linear-gradient(90deg, #c7ecee, #81ecec); }
+        .sector-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .sector-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-right: 1rem; font-size: 1.5rem; }
+        .sector-tech .sector-icon { background: #e3f2fd; } .sector-finance .sector-icon { background: #e8f5e8; } .sector-energy .sector-icon { background: #fff3e0; } .sector-healthcare .sector-icon { background: #fce4ec; } .sector-consumer .sector-icon { background: #fff8e1; } .sector-materials .sector-icon { background: #e0f2f1; }
+        .sector-info { flex: 1; }
+        .sector-name { font-size: 1.2rem; font-weight: bold; color: #2c3e50; margin-bottom: 0.3rem; }
+        .sector-count { color: #6c757d; font-size: 0.9rem; }
+        .sector-description { color: #6c757d; line-height: 1.6; margin-bottom: 1rem; }
+        .sector-stats { display: flex; gap: 1rem; margin-bottom: 1rem; }
+        .stat-item { text-align: center; flex: 1; }
+        .stat-value { font-size: 1.1rem; font-weight: bold; color: #2c3e50; }
+        .stat-label { font-size: 0.8rem; color: #6c757d; margin-top: 0.2rem; }
+        .sector-actions { display: flex; gap: 0.5rem; }
+        .action-btn { padding: 0.6rem 1rem; border: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; flex: 1; }
+        .btn-primary { background: linear-gradient(135deg, #FF6B6B 0%, #FF5252 100%); color: white; }
+        .btn-secondary { background: #f8f9fa; color: #495057; border: 1px solid #e9ecef; }
+        .action-btn:hover { transform: translateY(-1px); }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div class="sidebar">
+            <div class="logo-section">
+                <div class="logo">오르다</div>
+                <div class="logo-subtitle">투자 학습 플랫폼</div>
+            </div>
+            <div class="nav-menu">
+                <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon"></span><span>Home</span></div>
+                <div class="nav-item" onclick="navigateTo('mypage')"><span class="nav-icon"></span><span>My Page</span></div>
+                <div class="nav-item" onclick="navigateTo('news')"><span class="nav-icon"></span><span>News</span></div>
+                <div class="nav-item active" onclick="navigateTo('sector')"><span class="nav-icon"></span><span>Sector</span></div>
+                <div class="nav-item" onclick="navigateTo('company')"><span class="nav-icon"></span><span>Company</span></div>
+                <div class="nav-item" onclick="navigateTo('game')"><span class="nav-icon"></span><span>Game</span></div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="page-header" style="text-align: center;">
+                <div class="breadcrumb"></div>
+                <h1 class="page-title"> 산업 분석</h1>
+                <p class="page-subtitle">KRX 기준 산업 분류별로 관련 이슈와 투자 흐름을 분석해보세요.</p>
+            </div>
+            
+            <div class="search-filter-section">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" placeholder="산업명, 키워드로 검색..." id="sector-search">
+                </div>
+            </div>
+            
+            <div class="sectors-section">
+                <h2 class="section-title" id="sector-list-title">주요 산업 분류</h2>
+                <div class="sectors-grid" id="sectors-container">
+                    </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // --- 1. DB 연동 대신 더미 데이터를 사용합니다. ---
+        const sectorsData = [
+            { id: 'tech', name: 'IT 서비스', description: '컴퓨터 소프트웨어 개발, 시스템 통합, 정보기술 서비스 등을 제공하는 산업', icon: '💻', companies: 245, recentIssues: 3, monthlyReturn: '+2.5%', className: 'sector-tech' },
+            { id: 'finance', name: '금융업', description: '은행, 증권, 보험, 자산운용 등 금융 서비스를 제공하는 산업', icon: '🏦', companies: 89, recentIssues: 5, monthlyReturn: '+1.2%', className: 'sector-finance' },
+            { id: 'energy', name: '정유', description: '원유 정제, 석유화학 제품 생산 및 유통 관련 산업', icon: '⛽', companies: 34, recentIssues: 8, monthlyReturn: '+4.1%', className: 'sector-energy' },
+            { id: 'healthcare', name: '의료·정밀기기', description: '의료기기, 정밀기기, 바이오 관련 제품을 제조하는 산업', icon: '🏥', companies: 156, recentIssues: 4, monthlyReturn: '+3.8%', className: 'sector-healthcare' },
+            { id: 'consumer', name: '음식료·담배', description: '식품, 음료, 담배 등 소비재를 제조하는 산업', icon: '🍽️', companies: 67, recentIssues: 2, monthlyReturn: '+0.8%', className: 'sector-consumer' },
+            { id: 'materials', name: '화학', description: '기초 화학물질, 정밀화학, 플라스틱 등 화학 제품 관련 산업', icon: '🧪', companies: 98, recentIssues: 6, monthlyReturn: '+2.9%', className: 'sector-materials' },
+            { id: 'semiconductors', name: '반도체', description: '메모리, 시스템반도체, 반도체 장비 등 반도체 관련 산업', icon: '📱', companies: 45, recentIssues: 12, monthlyReturn: '+5.2%', className: 'sector-tech' },
+            { id: 'defense', name: '방위산업', description: '방위산업 관련 장비, 무기체계, 항공우주 등을 제조하는 산업', icon: '🛡️', companies: 23, recentIssues: 7, monthlyReturn: '+6.3%', className: 'sector-materials' },
+            { id: 'automotive', name: '운송장비·부품', description: '자동차, 조선, 항공기 등 운송장비 및 관련 부품 제조업', icon: '🚗', companies: 87, recentIssues: 5, monthlyReturn: '+1.7%', className: 'sector-consumer' }
+        ];
+
+        // 페이지가 로드되면 실행
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 2. API 로드 함수 대신 더미 데이터로 화면을 바로 구성합니다. ---
+            displaySectors(sectorsData);
+            setupEventListeners();
+        });
+        
+        // --- 3. 화면 표시와 관련된 함수들은 더미 데이터 버전의 것을 사용합니다. ---
+        function displaySectors(sectors) {
+            const container = document.getElementById('sectors-container');
+            container.innerHTML = '';
+            if (sectors.length === 0) {
+                container.innerHTML = `<div class="loading"><p>해당 조건에 맞는 산업이 없습니다.</p></div>`;
+                return;
+            }
+            sectors.forEach(sector => container.appendChild(createSectorCard(sector)));
+        }
+
+        function createSectorCard(sector) {
+            const card = document.createElement('div');
+            card.className = `sector-card ${sector.className}`;
+            card.innerHTML = `
+                <div class="sector-header">
+                    <div class="sector-icon">${sector.icon}</div>
+                    <div class="sector-info">
+                        <div class="sector-name">${sector.name}</div>
+                        <div class="sector-count">${sector.companies}개 기업</div>
+                    </div>
+                </div>
+                <div class="sector-description">${sector.description}</div>
+                <div class="sector-stats">
+                    <div class="stat-item"><div class="stat-value">${sector.recentIssues}</div><div class="stat-label">최근 이슈</div></div>
+                    <div class="stat-item"><div class="stat-value">${sector.monthlyReturn}</div><div class="stat-label">월간 수익률</div></div>
+                </div>
+                <div class="sector-actions">
+                    <button class="action-btn btn-primary" onclick="analyzeSector('${sector.name}')"> 분석하기</button>
+                    <button class="action-btn btn-secondary" onclick="viewCompanies('${sector.name}')"> 기업보기</button>
+                </div>
+            `;
+            return card;
+        }
+
+        function setupEventListeners() {
+            // 검색 기능은 API 호출이 아닌, 더미 데이터 배열을 필터링하도록 수정
+            document.getElementById('sector-search').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredSectors = sectorsData.filter(sector => 
+                    sector.name.toLowerCase().includes(searchTerm) ||
+                    sector.description.toLowerCase().includes(searchTerm)
+                );
+                displaySectors(filteredSectors);
+            });
+        }
+        
+        function analyzeSector(sectorName) {
+            // 버튼 기능은 더미 데이터 버전의 것을 사용
+            window.location.href = `company.html?sector=${encodeURIComponent(sectorName)}&from=sector`;
+        }
+
+        function viewCompanies(sectorName) {
+            // 버튼 기능은 더미 데이터 버전의 것을 사용
+            window.location.href = `company.html?sector=${encodeURIComponent(sectorName)}`;
+        }
+
+        // --- 4. 요청하신 대로 navigateTo 함수는 절대 건드리지 않았습니다. ---
+        function navigateTo(page) {
+            const pages = {
+                home: '/static/index.html',
+                news: '/static/news.html',
+                sector: '/static/sector.html',
+                company: '/static/company.html',
+                game: '/static/game.html',
+                mypage: '/static/mypage.html'
+            };
+            
+            if (pages[page]) {
+                // 현재 페이지가 아닌 경우에만 이동
+                if(window.location.pathname !== pages[page]) {
+                    window.location.href = pages[page];
+                }
+            }
+        }
+
+        // 알림창 기능 (필요할 수 있으므로 유지)
+        function showNotification(message, type = 'info') {
+            // ... (기존 showNotification 함수 내용)
+        }
+    </script>
+</body>
+</html>
